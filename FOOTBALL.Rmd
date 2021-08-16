@@ -1,0 +1,359 @@
+---
+title: "Football"
+author: "Laksara_Abeysinghe"
+date: "August 16, 2021"
+output: html_document
+---
+
+Hey, guys here I used KAGGLE data set which is related to the football. There are 18156 players and 48 variables and this data set is valid for up to 2020 worldwide versa. The researcher mainly focused on to the performance ratings of the players. So according to those components I tried to carry out my data analytics and data visualizations parts.
+
+```{r data set, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+library(tidyverse)
+df <- read.csv("Foot_Ball.csv")
+head(df)
+```
+
+# Nationalities of players
+
+Around the world football players are met as every country as the most interesting game is the football lot of nations. So I had to analyze what nationality was the most contributed for this game.
+
+```{r nation1, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+(natio <- df %>%
+  group_by(Nationality) %>%
+  summarize(count = n()))
+
+```
+
+If we consider how many players of the nationalities has contributed for this game more than 100 from one nation, 
+
+```{r nation2}
+natio <- df %>%
+  group_by(Nationality) %>%
+  summarize(count = n()) %>%
+  filter(count>=100)
+
+ggplot(natio, aes(x = count, fct_reorder(Nationality, count), color = "Red")) + 
+  scale_x_continuous(breaks = seq(100, 2000, by = 100))+
+  geom_point() +
+  labs(
+    title = paste("NATIONALITIES OF WORLD FOOTBALL PLAYERS"),
+    subtitle = paste("-MORE THAN 100 PLAYRES UPTO 2020-"),
+    caption = paste("out of 164 nationalities"),
+    x = "Number of playres", y = "Nationalities"
+  )
+
+```
+
+England has contributed more than 1650 players for the football as the top nation and we can see how many nationalities have contributed players more than 100 from this graph's content.
+
+# Preferred Foot of the players
+
+```{r preff foot, echo=TRUE}
+df %>%
+  group_by(Preferred.Foot) %>%
+  summarize(count = n())
+
+```
+
+From 18159 of players we can identify 13948 players who have their preferred foot as Right foot and there are 4211 players who preferred foot as Left foot as well.
+
+# The working rate according to Skill Moves of the players
+
+There are five categories of skill moves according to players as 1,2,3,4 & 5. There are several types of working rates of players. Here I could carry out explicit visualization in together these categories. From the following outcome that components categorize in to the preferred foot also.
+
+```{r wrking rt}
+ggplot(df) +
+  geom_bar(
+    mapping = aes(x = Work.Rate, fill = Preferred.Foot)) +
+  facet_grid(Skill.Moves ~  Preferred.Foot) + 
+  scale_y_continuous(breaks = seq(0, 5000, by = 250)) +
+  labs(
+    title = paste("Working rate according to Skill Moves of the playres"),
+    subtitle = paste("--separatly preferred foot"),
+     y = "Players"
+  ) +
+  coord_flip() +
+  theme_grey()
+
+```
+
+According to those bar plots we can say most of players belong to 2nd skill move category and they have medium/medium working rate and same as the both type of foots. 
+
+# Wages paying of clubs (by EURO *K)
+
+There are lots of number of football clubs around the world and lot of players are given very big wage for playing under that clubs. According to these data collection we can carry out our wage analytics as this.
+
+```{r wage, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+wagess <- read_csv("Foot_Ball.csv", col_types = cols(Wage = col_number()))
+(wag_clubs <- wagess %>%
+  count(Club, wt = Wage))
+
+```
+
+# Higher wages paying clubs (more than EURO2500K)
+
+So out of those 652 clubs we can explicit several clubs which wages are given more than euro 2500K.  
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+(wag_clubs <- wagess %>%
+  count(Club, wt = Wage, sort = TRUE) %>%
+  filter(n>2500))
+
+ggplot(wag_clubs, aes(fct_reorder(Club, n), y = n)) +
+  geom_bar(stat = "identity", fill = "lime green") +
+  geom_text(aes(label = n), stat = "identity", vjust = 3) +
+  labs(
+    title = paste("Higher wages paying clubs (more than $2500K)"),
+    y = "Wages (EURO *K)", x = "Clubs" ) +
+  coord_polar()+
+  theme_gray()
+
+```
+
+Basically we can identify 9 clubs which paying more than euro 2500K for a player. From this output graph we have "Real Madrid" & "FC Barcelona" which is has most wages for the players. That is euro5017K & euro 4837K respectively. 
+
+# Best ratings of Goal Keeping Performance of players
+
+In here we can identify some of several skills of goal keeping which as, diving, handling, kicking, positioning & reflexes.
+
+```{r gk, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+(df_gk <- wagess %>%
+  filter(GKDiving >= 80, 
+         GKHandling >= 80, 
+         GKKicking >= 80, 
+         GKPositioning >= 80, 
+         GKReflexes >= 80
+         ) %>%
+  select(Name, 
+         Nationality,
+         GKDiving,
+         GKHandling,
+         GKKicking,
+         GKPositioning,
+         GKReflexes,
+         Wage
+         ))
+
+```
+
+From the above content that have three from Germany and two from Brazil & Spain all together 7 players. The wages which are paid to them also represent in the last column. 
+
+```{r gh table, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+names <- rep(df_gk[[1]], times = 5)
+nationalities <- rep(df_gk[[2]], times = 5)
+figures <- rep(
+  c("GKDiving", "GKHandling", "GKKicking", "GKPositioning", "GKReflexes"),
+  each = 7
+)
+ratings_gk <- c(df_gk$GKDiving, df_gk$GKHandling, df_gk$GKKicking, df_gk$GKPositioning,
+             df_gk$GKReflexes)
+
+new_df_gk <- data.frame(names, nationalities, figures, ratings_gk)
+
+ggplot(new_df_gk, aes(x = names, y = ratings_gk, fill = figures)) +
+  geom_bar(stat = "identity", position = "dodge", width = 1) +
+  scale_fill_manual(values = rainbow(5))+
+  geom_text(new_df_gk, mapping = aes(label = ratings_gk), 
+            stat = "identity", position_dodge(width = 1), hjust = 1) +
+  facet_grid(~nationalities) + 
+  scale_y_continuous(breaks = seq(0, 100, by = 10)) +
+  labs(
+    title = paste("Best figures of Goal Keeping Performance of players"),
+    y = "Performance Ratings", x = "Player")+
+  coord_polar()
+  
+```
+
+# Best ratings of shots Performance of players
+
+In this game we can see lot of shots variations from players. That shots styles tell us how they influence to the player and also wining of the team. In here this data collections carry out some basic shots selections which are heading accuracy, long and shot passing, long shots and the shot power. 
+
+```{r shots, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+(df_shots <- df %>%
+  filter(HeadingAccuracy >= 75, ShortPassing >=80,
+         LongPassing >= 80, LongShots >= 80, ShotPower >=80) %>%
+  select( Name, Nationality, Position, Club, HeadingAccuracy, ShortPassing,
+          LongPassing, LongShots, ShotPower))
+
+
+```
+
+We can see difference positions of players which related to this shots accuracy ratings and also difference football clubs which related to these top 8 players. 
+
+```{r shots tbl, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+names_st <- rep(df_shots[[1]], times = 5)
+nationalities_st <- rep(df_shots[[2]], times = 5)
+position <- rep(df_shots[[3]], times = 5)
+clubs <- rep(df_shots[[4]], times = 5)
+rates <- rep(
+  c("HeadingAccuracy", "ShortPassing", "LongPassing", "LongShots", "ShotPower"),
+  each = 8  )
+ratings_st <- c(df_shots$HeadingAccuracy, df_shots$ShortPassing, 
+                df_shots$LongPassing, df_shots$LongShots, df_shots$ShotPower)
+
+new_df_shots <- data.frame(names_st, nationalities_st, 
+                           position, clubs, rates, ratings_st)
+
+ggplot(new_df_shots, aes(x = names_st, y = ratings_st, fill = rates))+
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual(values = c("HeadingAccuracy" = "maroon1",
+                               "ShortPassing" = "mediumorchid3",
+                               "LongPassing" = "steelblue4 ",
+                               "LongShots" = "springgreen2",
+                               'ShotPower' = "turquoise")) +
+  geom_text(new_df_shots, mapping = aes(label = ratings_st), 
+            stat = "identity", position_dodge(width = 1), hjust = 7) +
+  facet_grid(~nationalities_st) + 
+  scale_y_continuous(breaks = seq(0, 110, by = 10)) +
+  labs(
+    title = paste("Best ratings of shots Performance of players"),
+    y = "Performance Ratings", x = "Player")+
+  coord_flip()+
+  theme_classic(base_size = 11, base_line_size = 0.8)
+           
+```
+
+From the above content we can see how they vary from the difference nationalities.
+
+# Top ratings of Finishing, Penalties and FK Accuracy
+
+When we are talking about the finishing, penalties and FK accuracy I thought that category ratings more influence to the winning of a team. 
+
+```{r finishing, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+(df_rat <- df %>%
+    filter(Finishing >= 80,Penalties >= 80, FKAccuracy >= 80) %>%
+    select( Name, Nationality, Position, Club, Finishing, Penalties, FKAccuracy))
+
+```
+
+Ten players have the ratings above 80 scales for those components and we can see how they vary with nationalities and difference clubs and that players have some difference positions on the ground.
+
+```{r finish tble, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+ggplot(df_rat) +
+  geom_line(aes(fct_reorder(Name, Finishing), y = Finishing,group = 1, color = "Finishing"), size = 1) +
+  geom_point(aes(x = Name, y = Finishing, color = "Finishing"), size = 8, stat = "identity") +
+  geom_text(df_rat, mapping = aes(x = Name, y = Finishing, label = Finishing), 
+            stat = "identity", hjust = 2) +
+  geom_point(aes(x = Name, y = Penalties, color = "Penalties"), size = 5, stat = "identity")+
+  geom_point(aes(x = Name, y = FKAccuracy, color = "FKAccuracy"), size = 5, stat = "identity") +
+  scale_y_continuous(breaks = seq(80, 100, by = 1)) +
+  labs(
+    title = paste("Top ratings of Finishing, Penalties and FKAccuracy"),
+    y = "Ratings", x = "Player" ) +
+  theme_bw()
+
+```
+
+By plotting those things we can see how other ratings are changing from according to ascending order of finishing rate of the players.
+
+# Defensive Performance                                          
+
+In the football game the defensive is the main part of the roll. All crowds who love the football know how the defensing is value for the football. Here the data set collects the most valuable ratings related to the defensing. Aggression, Interceptions, Marking, Standing Tackle and Sliding Tackle ratings are discussed here. 
+
+```{r defense, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+(df_diff <- df %>%
+    filter(Aggression >= 85, Interceptions >= 85, 
+           Marking >= 85, StandingTackle >= 85, SlidingTackle >= 85) %>%
+    select( Name, Nationality, Position, Club, Aggression, Interceptions, 
+            Marking, StandingTackle, SlidingTackle))
+
+```
+
+We can see from above contents the top orders who have high ratings to defensing. These ten players have different nationalities, clubs and different positions. 
+
+```{r defens tbl, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+ggplot(df_diff, mapping = aes(fct_reorder(Name, Aggression), y = Aggression, group = 1)) +
+  geom_point(aes(color = "Aggression"), size = 7) +
+  geom_line(color = "red", size = 1) +
+  geom_point(aes(x = Name, y = Interceptions, color = "Interceptions"), size = 4)+
+  geom_point(aes(x = Name, y = Marking, shape = "Marking"), size = 5) +
+  scale_y_continuous(breaks = seq(85, 100, by = 1)) +
+  labs(
+    title = paste("Top Defensive Performance"),
+    subtitle = paste("-Aggression, Interceptions & Marking"),
+    y = "Ratings", x = "Player" ) +
+  theme_linedraw() +
+  coord_polar()
+
+```
+
+Aggression, Interceptions and Marking skills are most important ratings of the defensing. We can see vary appearance of these ratings in order to ascending order of Aggression skill.
+
+# Tackling performance
+
+```{r tckl, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+ggplot(df_diff) +
+  geom_line(aes(fct_reorder(Name, StandingTackle), y = StandingTackle,group = 1, color = "StandingTackle"), size = 1) +
+  geom_point(aes(fct_reorder(Name, StandingTackle), y = StandingTackle, color = "StandingTackle"), size = 3) +
+  geom_line(aes(x = Name, y = SlidingTackle, group = 1,color = "SlidingTackle"), size = 1) +
+  geom_point(aes(x = Name, y = SlidingTackle, color = "SlidingTackle"), size = 3) +
+  scale_y_continuous(breaks = seq(85, 100, by = 1)) +
+  labs(
+    title = paste("Top Tuckling performance"),
+    subtitle = paste("-Standing & Sliding"),
+    y = "Ratings", x = "Player" ) +
+  theme_linedraw() +
+  coord_polar()
+```
+
+There are two tackle positions and we can see how the two ratings differ from other. The graph content based on to ascending order of standing tackle ratings. 
+
+# Top common performance ratings of players
+
+During analyzing those things I could catch some basic performance of players. Those are much valuable ratings for taking idea about how the players' performances are. Here I used mainly 75 scale (I used 70 scale for only Balance rating) marks to filter those rating when I select the top order players. It could be miss some good players because I tried to filter here those performance altogether. 
+
+```{r commn, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+(df_com <- df %>%
+    filter(Volleys >= 75, Crossing >= 75, Curve >= 75, Dribbling >= 75, 
+           BallControl >= 75, Acceleration >= 75, SprintSpeed >= 75, Agility >= 75,
+           Reactions >= 75, Balance >= 70, 
+           Positioning >= 75, Composure >= 75, Vision >= 75) %>%
+    select( Name, Nationality, Club, Volleys, Crossing, Curve, Dribbling, 
+            BallControl, Acceleration, SprintSpeed, Agility,
+            Reactions, Balance, 
+            Positioning, Composure, Vision))
+
+```
+
+In here we can filter 38 players who have top marks of these ratings altogether. If a player has one type of rating is high that player is note here. These all 38 players have all performances more than 75 scale.
+Here I selected Vision, Volleys, Crossing, Curve and Dribbling ratings for build some visualization. This scatter plot carry out according to ascending order of the Vision rating of the player. 
+
+```{r cmmn tbl, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+ggplot(df_com) +
+  geom_line(aes(fct_reorder(Name, Vision), y = Vision,group = 1, shape = "Vision"), size = 1) +
+  geom_point(aes(fct_reorder(Name, Vision), y = Vision, shape = "Vision"), size = 3) +
+  geom_point(aes(x = Name, y = Volleys, color = "Volleys"), size = 3) +
+  geom_point(aes(x = Name, y = Crossing, color = "Crossing"), size = 3) +
+  geom_point(aes(x = Name, y = Curve, color = "Curve"), size = 3) +
+  geom_point(aes(x = Name, y = Dribbling, color = "Dribbling"), size = 5) +
+  scale_y_continuous(breaks = seq(75, 100, by = 1)) +
+  labs(
+    title = paste("Top common performance ratings of players"),
+    subtitle = paste("-Vision, Volleys, Crossing, Curve, Dribbling"),
+    y = "Ratings", x = "Player" ) +
+  theme_get() +
+  coord_flip()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
